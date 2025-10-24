@@ -1,0 +1,94 @@
+server.js
+import express from 'express';
+import axios from 'axios';
+import dotenv from 'dotenv';
+
+dotenv.config();
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Serve static files
+app.use(express.static('public'));
+
+// Weather API endpoint
+app.get('/weather', async (req, res) => {
+  const city = req.query.city;
+  if (!city) return res.status(400).json({ error: 'City required' });
+
+  const apiKey = process.env.OPENWEATHER_API_KEY;
+  const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+
+  try {
+    const response = await axios.get(url);
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch weather' });
+  }
+});
+
+app.listen(PORT, () => console.log(`🌦️ Server running on http://localhost:${PORT}`));
+
+2️⃣ .env
+OPENWEATHER_API_KEY=your_api_key_here
+PORT=3000
+
+
+Replace your_api_key_here with your actual OpenWeather API key.
+
+3️⃣ public/index.html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Weather App</title>
+  <style>
+    body { font-family: Arial; text-align: center; margin-top: 50px; }
+    input, button { padding: 10px; font-size: 16px; margin: 5px; }
+    pre { background: #f4f4f4; padding: 20px; display: inline-block; }
+  </style>
+</head>
+<body>
+  <h1>Simple Weather Dashboard</h1>
+  <input id="city" placeholder="Enter city name" />
+  <button id="check-btn">Check Weather</button>
+  <pre id="output"></pre>
+
+  <script>
+    document.getElementById('check-btn').addEventListener('click', async () => {
+      const city = document.getElementById('city').value.trim();
+      if (!city) return alert('Please enter a city name');
+
+      try {
+        const res = await fetch(`/weather?city=${city}`);
+        if (!res.ok) throw new Error('City not found');
+
+        const data = await res.json();
+        document.getElementById('output').textContent =
+          `${data.name}: ${data.main.temp}°C, ${data.weather[0].description}`;
+      } catch (err) {
+        document.getElementById('output').textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>
+
+4️⃣ package.json
+{
+  "name": "weather-app",
+  "version": "1.0.0",
+  "description": "Simple Node.js Weather Dashboard",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
